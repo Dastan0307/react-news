@@ -1,4 +1,4 @@
-import { formData } from '../helpers/formData'
+import { formData } from '../../helpers/formData'
 
 import styles from './Header.module.scss'
 
