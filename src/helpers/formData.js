@@ -6,5 +6,5 @@ export const formData = (date) => {
     day: 'numeric'
 	}
 
-	return date.toLocalDateString('en-US', options)
+	return date.toLocaleDateString('en-US', options)
 }
