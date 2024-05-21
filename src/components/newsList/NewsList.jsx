@@ -1,10 +1,11 @@
+import NewsItem from '../newsItem/NewsItem'
 import styles from './NewsList.module.scss'
 
 const NewsList = ({ news }) => {
 	return (
 		<ul className={styles.list}>
 			{news?.map(item => {
-				return <li key={item.id}>{item.title}</li>
+				return <NewsItem key={item.id} item={item} />
 			})}
 		</ul>
 	)
