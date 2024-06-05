@@ -1,28 +1,34 @@
 import { useEffect, useState } from 'react'
 import { getCategories, getNews } from '../../api/apiNews'
+import Categories from '../../components/categories/Categories'
 import NewBanner from '../../components/newBanner/NewBanner'
 import NewsList from '../../components/newsList/NewsList'
 import Pagination from '../../components/pagination/Pagination'
 import Skeleton from '../../components/skeleton/Skeleton'
 import styles from './Main.module.scss'
-import Categories from '../../components/categories/Categories'
+import Search from '../../components/search/Search'
+import { useDebounce } from '../../helpers/hooks/useDebounce'
 
 export const Main = () => {
 	const [news, setNews] = useState(null)
 	const [isLoading, setIsLoading] = useState(true)
 	const [currentPage, setCurrentPage] = useState(1)
 	const [categories, setCategories] = useState([])
+	const [keywords, setKeywords] = useState('')
 	const [selectedCategory, setSelectedCategory] = useState('All')
 	const totalPages = 10
 	const pageSize = 10
+
+	const debouncedKeywords = useDebounce(keywords, 1500)
 
 	const fetchNews = async currentPage => {
 		try {
 			setIsLoading(true)
 			const response = await getNews({
 				page_number: currentPage,
-        page_size: pageSize,
-        category: selectedCategory === 'All' ? null : selectedCategory,
+				page_size: pageSize,
+				category: selectedCategory === 'All' ? null : selectedCategory,
+				keywords: debouncedKeywords,
 			})
 			setNews(response.news)
 			setIsLoading(false)
@@ -48,7 +54,7 @@ export const Main = () => {
 
 	useEffect(() => {
 		fetchNews(currentPage)
-	}, [currentPage, selectedCategory])
+	}, [currentPage, selectedCategory, debouncedKeywords])
 
 	const handleNextPage = () => {
 		if (currentPage < totalPages) {
@@ -63,12 +69,17 @@ export const Main = () => {
 	}
 
 	const handlePageClick = pageNumber => {
-		setCurrentPage(currentPage)
+		setCurrentPage(pageNumber)
 	}
 
 	return (
 		<main className={styles.main}>
-			<Categories categories={categories} setSelectedCategory={setSelectedCategory} selectedCategory={selectedCategory} />
+			<Categories
+				categories={categories}
+				setSelectedCategory={setSelectedCategory}
+				selectedCategory={selectedCategory}
+			/>
+			<Search keywords={keywords} setKeywords={setKeywords} />
 			{news?.length > 0 && !isLoading ? (
 				<NewBanner item={news[0]} />
 			) : (
