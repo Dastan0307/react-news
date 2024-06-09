@@ -1,63 +1,33 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { getCategories, getNews } from '../../api/apiNews'
 import Categories from '../../components/categories/Categories'
 import NewBanner from '../../components/newBanner/NewBanner'
 import NewsList from '../../components/newsList/NewsList'
 import Pagination from '../../components/pagination/Pagination'
-import Skeleton from '../../components/skeleton/Skeleton'
-import styles from './Main.module.scss'
 import Search from '../../components/search/Search'
+import { PAG, TOTAL_PAGES } from '../../constants/constants'
 import { useDebounce } from '../../helpers/hooks/useDebounce'
+import { useFetch } from '../../helpers/hooks/useFetch'
+import styles from './Main.module.scss'
 
 export const Main = () => {
-	const [news, setNews] = useState(null)
-	const [isLoading, setIsLoading] = useState(true)
 	const [currentPage, setCurrentPage] = useState(1)
-	const [categories, setCategories] = useState([])
 	const [keywords, setKeywords] = useState('')
 	const [selectedCategory, setSelectedCategory] = useState('All')
-	const totalPages = 10
-	const pageSize = 10
 
 	const debouncedKeywords = useDebounce(keywords, 1500)
 
-	const fetchNews = async currentPage => {
-		try {
-			setIsLoading(true)
-			const response = await getNews({
-				page_number: currentPage,
-				page_size: pageSize,
-				category: selectedCategory === 'All' ? null : selectedCategory,
-				keywords: debouncedKeywords,
-			})
-			setNews(response.news)
-			setIsLoading(false)
-		} catch (error) {
-			console.log(error)
-		}
-	}
+	const { data, error, isLoading } = useFetch(getNews, {
+		page_number: currentPage,
+		page_size: PAG,
+		category: selectedCategory === 'All' ? null : selectedCategory,
+		keywords: debouncedKeywords,
+	})
 
-	const fetchCategories = async () => {
-		try {
-			setIsLoading(true)
-			const response = await getCategories()
-			setCategories(['All', ...response.categories])
-			setIsLoading(false)
-		} catch (error) {
-			console.log(error)
-		}
-	}
-
-	useEffect(() => {
-		fetchCategories()
-	}, [])
-
-	useEffect(() => {
-		fetchNews(currentPage)
-	}, [currentPage, selectedCategory, debouncedKeywords])
+	const { data: dataCategories } = useFetch(getCategories)
 
 	const handleNextPage = () => {
-		if (currentPage < totalPages) {
+		if (currentPage < TOTAL_PAGES) {
 			setCurrentPage(currentPage + 1)
 		}
 	}
@@ -74,24 +44,19 @@ export const Main = () => {
 
 	return (
 		<main className={styles.main}>
-			<Categories
-				categories={categories}
+			{dataCategories ? <Categories
+				categories={dataCategories.categories}
 				setSelectedCategory={setSelectedCategory}
 				selectedCategory={selectedCategory}
-			/>
+			/> : null}
 			<Search keywords={keywords} setKeywords={setKeywords} />
-			{news?.length > 0 && !isLoading ? (
-				<NewBanner item={news[0]} />
-			) : (
-				<Skeleton type={'banner'} count={1} />
-			)}
-			{!isLoading ? (
-				<NewsList news={news} />
-			) : (
-				<Skeleton type={'item'} count={10} />
-			)}
+			<NewBanner
+				isLoading={isLoading}
+				item={data && data.news && data.news[0]}
+			/>
+			<NewsList isLoading={isLoading} news={data?.new} />
 			<Pagination
-				totalPages={totalPages}
+				TOTAL_PAGES={TOTAL_PAGES}
 				handleNextPage={handleNextPage}
 				handlePreviousPage={handlePreviousPage}
 				handlePageClick={handlePageClick}
