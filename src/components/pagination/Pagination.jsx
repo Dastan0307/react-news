@@ -7,6 +7,7 @@ const Pagination = ({
 	handlePageClick,
 	currentPage,
 }) => {
+	console.log(currentPage);
 	return (
 		<div className={styles.pagination}>
 			<button disabled={currentPage <= 1} onClick={handlePreviousPage} className={styles.arrow}>
